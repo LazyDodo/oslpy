@@ -1,5 +1,4 @@
 from .osl_py_addin import ShaderOSLPY
-from .osl_py_addin import OSLReload
 import bpy
 import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
@@ -34,14 +33,12 @@ node_categories = [
 
 def register():
     bpy.utils.register_class(ShaderOSLPY)
-    bpy.utils.register_class(OSLReload)
     nodeitems_utils.register_node_categories("SH_OSL_PY", node_categories)
 
 
 def unregister():
     nodeitems_utils.unregister_node_categories("SH_OSL_PY")
     bpy.utils.unregister_class(ShaderOSLPY)
-    bpy.utils.unregister_class(OSLReload)
 
 
 if __name__ == "__main__":

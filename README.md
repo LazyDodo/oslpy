@@ -50,9 +50,6 @@ Yeah those happen, if you think you found one, open up an issue with an as small
 
 ## Known issues
 
-### The reload button only works when the script node is selected
-Working on it, not sure how to fix yet
-
 ### Material view doesn't work
 This is a blender issue, not something that oslpy can fix sadly. 
  

@@ -1,21 +1,10 @@
 import bpy
 import _cycles
 import os
+import tempfile
 from .OSOReader import OSOReader
 from .Nodes import NodeGraph
 from .NodeGroupBuilder import CreateNodeGroup
-
-
-class OSLReload(bpy.types.Operator):
-    bl_idname = "bpyosl.reload"
-    bl_label = "Reload"
-
-    def execute(self, context):
-        # TODO: This only works if the node is the currently actice node
-        context.active_node.UpdateScript()
-        print("RELOAD Finished!")
-        return{'FINISHED'}
-
 
 class OSOAstBuilder():
     def __init__(self, oso):
@@ -38,9 +27,7 @@ class OSOAstBuilder():
 class ShaderOSLPY(bpy.types.NodeCustomGroup):
     def my_osl_compile(self, input_path):
         """compile .osl file with given filepath to temporary .oso file"""
-        import tempfile
-        output_file = tempfile.NamedTemporaryFile(
-            mode='w', suffix=".oso", delete=False)
+        output_file = tempfile.NamedTemporaryFile(mode='w', suffix=".oso", delete=False)
         output_path = output_file.name
         output_file.close()
 
@@ -52,24 +39,25 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
         return ok, output_path
 
     def UpdateScript(self):
-        import tempfile
-
         if self.ScriptType == "INTERNAL":
-            # write text datablock contents to temporary file
-            osl_file = tempfile.NamedTemporaryFile(
-                mode='w', suffix=".osl", delete=False)
-            osl_file.write(bpy.data.texts[self.script].as_string())
-            osl_file.close()
-            ok, oso_path = self.my_osl_compile(osl_file.name)
-            os.remove(osl_file.name)
+            if (bpy.data.texts.find(self.script) != -1 ):
+                # write text datablock contents to temporary file
+                osl_file = tempfile.NamedTemporaryFile(mode='w', suffix=".osl", delete=False)
+                osl_file.write(bpy.data.texts[self.script].as_string())
+                osl_file.close()
+                ok, oso_path = self.my_osl_compile(osl_file.name)
+                os.remove(osl_file.name)
+            else:
+                print("OSLPY: Script '%s' not found" % self.script)
+                return
         else:
             osl_file = bpy.path.abspath(self.extScript)
             ok, oso_path = self.my_osl_compile(osl_file)
 
         print("Reading bytecode")
         oso = OSOReader(oso_path)
-        if oso.Load():
-            print("Parsing bytecode")
+        if oso.Load() is True:
+            # print("Parsing bytecode")
             ast = OSOAstBuilder(oso)
             if ast.Parse():
                 graph = NodeGraph()
@@ -79,6 +67,7 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                 InputIndex = 0
                 OutputNode = graph.CreateNode("NodeGroupOutput")
                 OutputNode.Name = "OutputNode"
+                OutputIndex = 0
                 for var in oso.Variables:
                     if var.varType == 'const' or var.varType == 'oparam':
                         graph.MakeConst(var)
@@ -88,7 +77,7 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                     elif var.IsArray():
                         graph.MakeArray(var, oso)
 
-                print("Generating code...")
+                # print("Generating code...")
                 for inst in ast.Instructions:
                     if inst.Tag == "___main___":
                         inst.Generate(graph)
@@ -100,8 +89,8 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                         else:
                             print("Mising var :%s" % var.Name)
                         OutputIdx = OutputIdx + 1
-                print("Compiled %s", graph.ShaderName)
-                print("Generating nodegroup...")
+                # print("Compiled %s", graph.ShaderName)
+                # print("Generating nodegroup...")
                 self.node_tree = CreateNodeGroup(graph, oso.Variables)
                 print("Done!")
 
@@ -113,18 +102,33 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
     bl_name = 'ShaderOSLPY'
     bl_label = 'OSLPY'
     bl_icon = 'NONE'
-    script = bpy.props.StringProperty(update=mypropUpdate)
+
+    def reloads(self, context):
+        # this seems to work also it shouldn't crash
+        try:
+            self.UpdateScript()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+    script = bpy.props.StringProperty(
+            update=mypropUpdate
+            )
     extScript = bpy.props.StringProperty(
-        subtype="FILE_PATH", update=mypropUpdate)
+            subtype="FILE_PATH",
+            update=reloads
+            )
     ScriptType = bpy.props.EnumProperty(
-        name="Script Type",
-        description="Script Type",
-        items=[
-            ("INTERNAL", "Internal", "Internal Script"),
-            ("EXTERNAL", "External", "External Script")
-        ],
-        update=mypropUpdate
-    )
+            name="Script Type",
+            description="Script Type",
+            items=[
+                ("INTERNAL", "Internal", "Internal Script"),
+                ("EXTERNAL", "External", "External Script")
+                ]
+            , update=reloads
+            )
+
+    reloading = bpy.props.BoolProperty(default=False, update=reloads)
 
     def init(self, context):
         self.getNodetree(self.name + '_node_tree2')
@@ -132,24 +136,19 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
     def update(self):
         pass
 
-    # Additional buttons displayed on the node.
     def draw_buttons(self, context, layout):
         layout.label("Node settings")
         layout.prop(self, "ScriptType", expand=True)
+
+        split = layout.split(percentage=0.85, align=True)
+        box = split.box()
         if self.ScriptType == "INTERNAL":
-            row = layout.row(align=True)
-            row.alignment = 'EXPAND'
-            row.prop_search(self, "script", bpy.data, "texts")
-            sub = row.row()
-            sub.scale_x = 0.2
-            sub.operator("bpyosl.reload")
+            box.prop_search(self, "script", bpy.data, "texts")
         else:
-            row = layout.row(align=True)
-            row.alignment = 'EXPAND'
-            row.prop(self, "extScript")
-            sub = row.row()
-            sub.scale_x = 0.2
-            sub.operator("bpyosl.reload")
+            box.prop(self, "extScript")
+
+        sub_box = split.box()
+        sub_box.prop(self, "reloading", text="", emboss=False, icon="FILE_REFRESH")
 
     def value_set(self, obj, path, value):
         if '.' in path:
@@ -174,10 +173,10 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
 
     def addSocket(self, is_output, sockettype, name):
         # for now duplicated socket names are not allowed
-        if is_output:
+        if is_output is True:
             if self.node_tree.nodes['GroupOutput'].inputs.find(name) == -1:
                 socket = self.node_tree.outputs.new(sockettype, name)
-        else:
+        elif is_output is False:
             if self.node_tree.nodes['GroupInput'].outputs.find(name) == -1:
                 socket = self.node_tree.inputs.new(sockettype, name)
         return socket
