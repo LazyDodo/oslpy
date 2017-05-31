@@ -1,5 +1,5 @@
 from .OpcodeBaseTypes import Opcode, Opcode_DS, Opcode_DSS, Opcode_SDD
-from .OpcodeBaseTypes import Opcode_DSSS, Opcode_DSI, Opcode_DIS
+from .OpcodeBaseTypes import Opcode_DSSS, Opcode_DSI, Opcode_DIS, Opcode_D
 from .OpcodeBaseTypes import Opcode_basicMath1, Opcode_basicMath
 
 
@@ -65,7 +65,7 @@ class Opcode_dot(Opcode_DSS):
         node.SetProperty("operation", "DOT_PRODUCT")
         nodeGraph.AddLink(node, 0, self.Source1)
         nodeGraph.AddLink(node, 1, self.Source2)
-        nodeGraph.SetVar(self.Destination, node, 0)
+        nodeGraph.SetVar(self.Destination, node, 1)
 
 
 class Opcode_length(Opcode_DS):
@@ -614,6 +614,25 @@ class Opcode_normalize(Opcode_DS):
         nodeGraph.SetVar(self.Destination, node, 0)
 
 
+class Opcode_backfacing(Opcode_D):
+    def __init__(self, OSO, index):
+        Opcode_D.__init__(self, OSO, index)
+
+    def Generate(self, nodeGraph):
+        node = nodeGraph.CreateNode("ShaderNodeGeometry")
+        nodeGraph.SetVar(self.Destination, node, 6)
+
+    
+class Opcode_isconnected(Opcode_DS):
+    def __init__(self, OSO, index):
+        Opcode_DS.__init__(self, OSO, index)
+
+    def Generate(self, nodeGraph):
+        node = nodeGraph.CreateNode('ShaderNodeValue')
+        node.SetProperty('outputs[0].default_value', 1)
+        nodeGraph.SetVar(self.Destination, node, 0)
+
+
 class Opcode_cross(Opcode_DSS):
     def __init__(self, OSO, index):
         Opcode_DSS.__init__(self, OSO, index)
@@ -838,15 +857,19 @@ class Opcode_if(Opcode):
         nodeGraph.SetVar(name, node, 0)
 
     def Generate(self, nodeGraph):
+        print("Building IF")
         InitialState = nodeGraph.Variables.copy()
         for inst in self.TrueCode:
+            print("Generating index %s opcode %s" % ( inst.InstructionIndex, inst.Instuction))
             inst.Generate(nodeGraph)
         TrueState = nodeGraph.Variables.copy()
         nodeGraph.Variables = InitialState.copy()
         for inst in self.FalseCode:
+            print("Generating index %s opcode %s" % ( inst.InstructionIndex, inst.Instuction))
             inst.Generate(nodeGraph)
         FalseState = nodeGraph.Variables.copy()
         nodeGraph.Variables = InitialState.copy()
+        print("Resolving variables")
         Values = {}
         for var in InitialState:
             if var not in Values.keys():
@@ -895,6 +918,13 @@ class Opcode_if(Opcode):
                                      self.Condition,
                                      Values[var].InitialValue,
                                      Values[var].FalseValue)
+                    else:
+                       if Values[var].FalseValue:
+                         nodeGraph.SetVar(self.OSO.GetVariable(var), Values[var].FalseValue.Node, Values[var].FalseValue.Output)
+                       else:
+                         if Values[var].TrueValue:
+                            nodeGraph.SetVar(self.OSO.GetVariable(var), Values[var].TrueValue.Node, Values[var].TrueValue.Output)
+                            
                     # these are values that are just set in the true or false
                     # branch, and should not be referenced after this block
                     # is finished, safe to ignore

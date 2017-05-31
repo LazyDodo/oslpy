@@ -83,7 +83,8 @@ class NodeGraph():
             sourceNode, index, prop)
 
     def Assign(self, Destination, Source):
-        self.Variables[Destination.Name] = self.Variables[Source.Name]
+        if (Destination.Name != Source.Name):
+            self.Variables[Destination.Name] = self.Variables[Source.Name]
 
     def AAssign(self, Destination, Source):
         self.Variables[Destination] = self.Variables[Source.Name]
@@ -107,6 +108,20 @@ class NodeGraph():
             self.SetVar(var, node, 0)
         else:
             print("Unsupported const type %s(%s)" % (var.Name, var.dataType))
+
+    def MakeGlobal(self,var):
+        node = self.CreateNode('ShaderNodeNewGeometry')
+        if var.Name=="N":
+            self.SetVar(var, node, 1)
+        elif var.Name=="I":
+            self.SetVar(var, node, 4)
+        elif var.Name=="P":
+            self.SetVar(var, node, 0)
+        elif var.Name=="Ng":
+            self.SetVar(var, node, 3)
+        else:
+            print("Unhandled global %s" % var.Name)
+            
 
     def MakeArray(self, var, oso):
         if 'int' in var.dataType == 'int' or 'float' in var.dataType:

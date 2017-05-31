@@ -5,7 +5,7 @@ def CreateNodeGroup(graph, vars):
     print("Building nodegroup %s" % graph.ShaderName)
     osl_group = bpy.data.node_groups.new(graph.ShaderName, 'ShaderNodeTree')
     for node in graph.NodeList:
-        print("Creating node %s" % node.Name)
+        print("Creating node %s type = %s" % (node.Name , node.NodeType))
         bpyNode = osl_group.nodes.new(node.NodeType)
         bpyNode.name = node.Name
 
@@ -34,7 +34,12 @@ def CreateNodeGroup(graph, vars):
                     flt.default_value[i] = float(var.defaults[i])
 
     # osl_group.links.begin_update()
+    linkSize = len(graph.LinkList)
+    counter =0
     for link in graph.LinkList:
+        counter = counter + 1
+        if (counter % 100 == 0):
+            print("Adding link %s of %s" % (counter, linkSize))
         TargetNode = osl_group.nodes[link.TargetNode.Name]
         SourceNode = osl_group.nodes[link.SourceNode.Name]
         osl_group.links.new(TargetNode.inputs[link.TargetIndex],

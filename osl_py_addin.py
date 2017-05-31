@@ -76,10 +76,13 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                         InputIndex = InputIndex + 1
                     elif var.IsArray():
                         graph.MakeArray(var, oso)
+                    elif var.varType == 'global':
+                        graph.MakeGlobal(var)
 
                 # print("Generating code...")
                 for inst in ast.Instructions:
                     if inst.Tag == "___main___":
+                        print("Generating index %s opcode %s" % ( inst.InstructionIndex, inst.Instuction))
                         inst.Generate(graph)
                 OutputIdx = 0
                 for var in oso.Variables:
