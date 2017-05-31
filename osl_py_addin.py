@@ -25,7 +25,7 @@ class OSOAstBuilder():
         return True
 
 
-class ShaderOSLPY(bpy.types.NodeCustomGroup):
+class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
     def my_osl_compile(self, input_path):
         """compile .osl file with given filepath to temporary .oso file"""
         output_file = tempfile.NamedTemporaryFile(mode='w', suffix=".oso", delete=False)

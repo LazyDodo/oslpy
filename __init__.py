@@ -1,4 +1,4 @@
-from .osl_py_addin import ShaderOSLPY
+from .osl_py_addin import ShaderNodeOSLPY
 import bpy
 import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
@@ -26,19 +26,19 @@ class ExtraNodesCategory(NodeCategory):
 
 node_categories = [
     ExtraNodesCategory("SH_OSL_PY", "OslPY", items=[
-        NodeItem("ShaderOSLPY"),
+        NodeItem("ShaderNodeOSLPY"),
         ]),
     ]
 
 
 def register():
-    bpy.utils.register_class(ShaderOSLPY)
+    bpy.utils.register_class(ShaderNodeOSLPY)
     nodeitems_utils.register_node_categories("SH_OSL_PY", node_categories)
 
 
 def unregister():
     nodeitems_utils.unregister_node_categories("SH_OSL_PY")
-    bpy.utils.unregister_class(ShaderOSLPY)
+    bpy.utils.unregister_class(ShaderNodeOSLPY)
 
 
 if __name__ == "__main__":
