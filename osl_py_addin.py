@@ -4,6 +4,7 @@ import os
 import tempfile
 from .OSOReader import OSOReader
 from .Nodes import NodeGraph
+from .OSOVariable import OSOVariable
 from .NodeGroupBuilder import CreateNodeGroup
 
 class OSOAstBuilder():
@@ -38,6 +39,16 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
 
         return ok, output_path
 
+    def update(self):
+        print("Update!!")
+        for input in self.inputs.keys():
+            print("Checking %s" % input)
+            if self.inputs[input].is_linked and 'oslpy_has_'+input in self.inputs.keys():
+                self.inputs['oslpy_has_'+input].default_value=1
+            else:    
+                self.inputs['oslpy_has_'+input].default_value=0
+        pass 
+
     def UpdateScript(self):
         if self.ScriptType == "INTERNAL":
             if (bpy.data.texts.find(self.script) != -1 ):
@@ -68,6 +79,16 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                 OutputNode = graph.CreateNode("NodeGroupOutput")
                 OutputNode.Name = "OutputNode"
                 OutputIndex = 0
+                #setup initializers
+                for inst in ast.Instructions:
+                    if inst.Tag != "___main___":
+                        if (inst.Instuction.Opcode == "assign"):
+                            print("Marking %s with initvar %s" % ( inst.Tag, inst.Source.Name))
+                            oso.GetVariable(inst.Tag).InitVar=inst.Source.Name
+                            line = "param float oslpy_has_" + inst.Tag +" 0"
+                            tvar = OSOVariable(line)
+                            oso.Variables.append(tvar)
+
                 for var in oso.Variables:
                     if var.varType == 'const' or var.varType == 'oparam':
                         graph.MakeConst(var)
@@ -78,6 +99,14 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                         graph.MakeArray(var, oso)
                     elif var.varType == 'global':
                         graph.MakeGlobal(var)
+                for inst in ast.Instructions:
+                    if inst.Tag != "___main___":
+                        if (inst.Instuction.Opcode == "assign"):
+                            node = graph.CreateNode("ShaderNodeMixRGB")
+                            graph.AddLink(node, 0, oso.GetVariable("oslpy_has_"+inst.Tag) )
+                            graph.AddLink(node, 1, oso.GetVariable(oso.GetVariable(inst.Tag).InitVar))
+                            graph.AddLink(node, 2, oso.GetVariable(inst.Tag))
+                            graph.SetVar(oso.GetVariable(inst.Tag), node, 0)
 
                 # print("Generating code...")
                 for inst in ast.Instructions:
@@ -95,6 +124,9 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
                 # print("Compiled %s", graph.ShaderName)
                 # print("Generating nodegroup...")
                 self.node_tree = CreateNodeGroup(graph, oso.Variables)
+                for var in oso.Variables:
+                    if var.varType == 'param' and 'oslpy_has_' in var.Name:
+                        self.inputs[var.Name].hide=True
                 print("Done!")
 
     def mypropUpdate(self, context):
@@ -135,9 +167,6 @@ class ShaderOSLPY(bpy.types.NodeCustomGroup):
 
     def init(self, context):
         self.getNodetree(self.name + '_node_tree2')
-
-    def update(self):
-        pass
 
     def draw_buttons(self, context, layout):
         layout.label("Node settings")

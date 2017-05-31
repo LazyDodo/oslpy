@@ -3,6 +3,7 @@ class OSOVariable():
         tokens = line.split()
         idx = 2
         if len(tokens) > 2:
+            self.InitVar =  ""
             self.defaults = []
             self.varType = tokens[0]
             self.dataType = tokens[1]
@@ -40,6 +41,10 @@ class OSOVariable():
     def Name(self):
         return self.Name
 
+    def InitVar(self):
+        return self.InitVar
+
+
     def dataType(self):
         return self.dataType
 
@@ -47,6 +52,8 @@ class OSOVariable():
         return self.defaults
 
     def GetNodeType(self):
+        if "oslpy_has" in self.Name:
+            return "NodeSocketFloatFactor"
         if self.IsFloat():
             return "NodeSocketFloat"
         if self.IsInt():
