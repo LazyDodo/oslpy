@@ -114,12 +114,36 @@ class Opcode_sqrt(Opcode_DS):
         Opcode_DS.__init__(self, OSO, index)
 
     def Generate(self, nodeGraph):
-        node = nodeGraph.CreateNode('ShaderNodeMath')
-        node.SetProperty("operation", "POWER")
-        nodeGraph.AddLink(node, 0, self.Source)
-        node.SetProperty("inputs[1].default_value", "0.5")
-        nodeGraph.SetVar(self.Destination, node, 0)
+        if (self.Source.IsNumeric()):
+            node = nodeGraph.CreateNode('ShaderNodeMath')
+            node.SetProperty("operation", "POWER")
+            nodeGraph.AddLink(node, 0, self.Source)
+            node.SetProperty("inputs[1].default_value", "0.5")
+            nodeGraph.SetVar(self.Destination, node, 0)
+        elif (self.Source.IsPointLike()):
+            node = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
+            nodeGraph.AddLink(node, 0, self.Source)
 
+            nodex = nodeGraph.CreateNode("ShaderNodeMath")
+            nodex.SetProperty("operation", "POWER")
+            nodex.SetProperty("inputs[1].default_value", "0.5")
+            nodeGraph.AddNodeLink(nodex, 0, node, 0)
+
+            nodey = nodeGraph.CreateNode("ShaderNodeMath")
+            nodey.SetProperty("operation", "POWER")
+            nodey.SetProperty("inputs[1].default_value", "0.5")
+            nodeGraph.AddNodeLink(nodey, 0, node, 1)
+
+            nodez = nodeGraph.CreateNode("ShaderNodeMath")
+            nodez.SetProperty("operation", "POWER")
+            nodez.SetProperty("inputs[1].default_value", "0.5")
+            nodeGraph.AddNodeLink(nodez, 0, node, 2)
+
+            nodeOut = nodeGraph.CreateNode('ShaderNodeCombineXYZ')
+            nodeGraph.AddNodeLink(nodeOut, 0, nodex, 0)
+            nodeGraph.AddNodeLink(nodeOut, 1, nodey, 0)
+            nodeGraph.AddNodeLink(nodeOut, 2, nodez, 0)
+            nodeGraph.SetVar(self.Destination, nodeOut, 0)
 
 class Opcode_neg(Opcode_DS):
     def __init__(self, OSO, index):
