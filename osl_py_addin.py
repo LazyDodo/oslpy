@@ -39,14 +39,14 @@ class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
 
         return ok, output_path
 
+    
     def update(self):
-        print("Update!!")
         for input in self.inputs.keys():
-            print("Checking %s" % input)
-            if self.inputs[input].is_linked and 'oslpy_has_'+input in self.inputs.keys():
-                self.inputs['oslpy_has_'+input].default_value=1
-            else:    
-                self.inputs['oslpy_has_'+input].default_value=0
+            if 'oslpy_has_'+input in self.inputs.keys():
+                if self.inputs[input].is_linked:
+                    self.inputs['oslpy_has_'+input].default_value=1
+                else:    
+                    self.inputs['oslpy_has_'+input].default_value=0
         pass 
 
     def UpdateScript(self):

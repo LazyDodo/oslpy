@@ -674,10 +674,28 @@ class Opcode_noise(Opcode_DSS):
         Opcode_DSS.__init__(self, OSO, index)
 
     def Generate(self, nodeGraph):
-        node = nodeGraph.CreateNode("ShaderNodeTexNoise")
-        nodeGraph.AddLink(node, 0, self.Source2)
-        nodeGraph.SetVar(self.Destination, node, 0)
+        if self.Destination.IsFloat():
+            if self.Source1.defaults[0] == '"perlin"':
+                node = nodeGraph.CreateNode("ShaderNodeTexNoise")
+                node.SetProperty("inputs[1].default_value", "1.0")
+                node.SetProperty("inputs[2].default_value", "0.0")
+                node.SetProperty("inputs[3].default_value", "0.0")
+                nodeGraph.AddLink(node, 0, self.Source2)
+            
+                node2 = nodeGraph.CreateNode("ShaderNodeMath")
+                node2.SetProperty("operation", "SUBTRACT")
+                node2.SetProperty("inputs[1].default_value", "0.5")
+                nodeGraph.AddNodeLink(node2, 0, node, 0)
 
+                node3 = nodeGraph.CreateNode("ShaderNodeMath")
+                node3.SetProperty("operation", "MULTIPLY")
+                node3.SetProperty("inputs[1].default_value", "2")
+                nodeGraph.AddNodeLink(node3, 0, node2, 0)
+                nodeGraph.SetVar(self.Destination, node3, 0)
+            else:
+                print("unsupporte noise type %s" % self.Source1.defaults[0])
+        else:
+            print("unsupporte noise target  %s" % self.Destination.dataType)
 
 class Opcode_compassign(Opcode_DIS):
     def __init__(self, OSO, index):
