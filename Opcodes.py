@@ -668,6 +668,18 @@ class Opcode_cross(Opcode_DSS):
         nodeGraph.AddLink(node, 1, self.Source2)
         nodeGraph.SetVar(self.Destination, node, 0)
 
+class Opcode_step(Opcode_DSS): 
+    def __init__(self, OSO, index):
+        Opcode_DSS.__init__(self, OSO, index)
+
+    def Generate(self, nodeGraph):
+        node = nodeGraph.CreateNode("ShaderNodeMath")
+        node.SetProperty("operation", "LESS_THAN")
+        nodeGraph.AddLink(node, 0, self.Source1)
+        nodeGraph.AddLink(node, 1, self.Source2)
+        
+        nodeGraph.SetVar(self.Destination, node, 0)
+
 
 class Opcode_noise(Opcode_DSS):
     def __init__(self, OSO, index):
