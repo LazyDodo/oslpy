@@ -686,28 +686,135 @@ class Opcode_noise(Opcode_DSS):
         Opcode_DSS.__init__(self, OSO, index)
 
     def Generate(self, nodeGraph):
-        if self.Destination.IsFloat():
-            if self.Source1.defaults[0] == '"perlin"':
+
+            if self.Source1.defaults[0] in ['"uperlin"','"noise"'] :
                 node = nodeGraph.CreateNode("ShaderNodeTexNoise")
                 node.SetProperty("inputs[1].default_value", "1.0")
                 node.SetProperty("inputs[2].default_value", "0.0")
                 node.SetProperty("inputs[3].default_value", "0.0")
                 nodeGraph.AddLink(node, 0, self.Source2)
-            
-                node2 = nodeGraph.CreateNode("ShaderNodeMath")
-                node2.SetProperty("operation", "SUBTRACT")
-                node2.SetProperty("inputs[1].default_value", "0.5")
-                nodeGraph.AddNodeLink(node2, 0, node, 0)
+                if (self.Destination.IsFloat()):
+                    nodeGraph.SetVar(self.Destination, node, 1)
+                elif (self.Destination.IsPointLike()):
+                    nodeGraph.SetVar(self.Destination, node, 0)
 
-                node3 = nodeGraph.CreateNode("ShaderNodeMath")
-                node3.SetProperty("operation", "MULTIPLY")
-                node3.SetProperty("inputs[1].default_value", "2")
-                nodeGraph.AddNodeLink(node3, 0, node2, 0)
-                nodeGraph.SetVar(self.Destination, node3, 0)
+            if self.Source1.defaults[0] in ['"perlin"','"snoise"'] :
+                node = nodeGraph.CreateNode("ShaderNodeTexNoise")
+                node.SetProperty("inputs[1].default_value", "1.0")
+                node.SetProperty("inputs[2].default_value", "0.0")
+                node.SetProperty("inputs[3].default_value", "0.0")
+                nodeGraph.AddLink(node, 0, self.Source2)
+
+                if (self.Destination.IsFloat()):
+                    # ShaderNodeTexNoise outputs 0..1 , perlin output -1..1 , adjust by val = (val - 0.5)*2
+                    node2 = nodeGraph.CreateNode("ShaderNodeMath")
+                    node2.SetProperty("operation", "SUBTRACT")
+                    node2.SetProperty("inputs[1].default_value", "0.5")
+                    nodeGraph.AddNodeLink(node2, 0, node, 0)
+
+                    node3 = nodeGraph.CreateNode("ShaderNodeMath")
+                    node3.SetProperty("operation", "MULTIPLY")
+                    node3.SetProperty("inputs[1].default_value", "2")
+                    nodeGraph.AddNodeLink(node3, 0, node2, 0)
+                    nodeGraph.SetVar(self.Destination, node3, 0)
+                elif (self.Destination.IsPointLike()):
+                     # split the source vector
+                    nodesplit = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
+                    nodeGraph.AddNodeLink(nodesplit, 0, node, 0)
+
+                    # floor the individial components
+                    nodex = nodeGraph.CreateNode('ShaderNodeMath')
+                    nodex.SetProperty("operation", "SUBTRACT")
+                    nodeGraph.AddNodeLink(nodex, 0, nodesplit, 0)
+                    nodex.SetProperty("inputs[1].default_value", "0.5")
+
+                    nodex1 = nodeGraph.CreateNode('ShaderNodeMath')
+                    nodex1.SetProperty("operation", "MULTIPLY")
+                    nodex1.SetProperty("inputs[1].default_value", "2")
+                    nodeGraph.AddNodeLink(nodex1, 0, nodex, 0)
+
+                    nodey = nodeGraph.CreateNode('ShaderNodeMath')
+                    nodey.SetProperty("operation", "SUBTRACT")
+                    nodeGraph.AddNodeLink(nodey, 0, nodesplit, 1)
+                    nodey.SetProperty("inputs[1].default_value", "0.5")
+
+                    nodey1 = nodeGraph.CreateNode('ShaderNodeMath')
+                    nodey1.SetProperty("operation", "MULTIPLY")
+                    nodey1.SetProperty("inputs[1].default_value", "2")
+                    nodeGraph.AddNodeLink(nodey1, 0, nodey, 0)
+                
+                    nodez = nodeGraph.CreateNode('ShaderNodeMath')
+                    nodez.SetProperty("operation", "SUBTRACT")
+                    nodeGraph.AddNodeLink(nodez, 0, nodesplit, 2)
+                    nodez.SetProperty("inputs[1].default_value", "0.5")
+
+                    nodez1 = nodeGraph.CreateNode('ShaderNodeMath')
+                    nodez1.SetProperty("operation", "MULTIPLY")
+                    nodez1.SetProperty("inputs[1].default_value", "2")
+                    nodeGraph.AddNodeLink(nodez1, 0, nodez, 0)
+
+                    # merge back into a vector
+                    mergevec = nodeGraph.CreateNode('ShaderNodeCombineXYZ')
+                    nodeGraph.AddNodeLink(mergevec, 0, nodex1, 0)
+                    nodeGraph.AddNodeLink(mergevec, 1, nodey1, 0)
+                    nodeGraph.AddNodeLink(mergevec, 2, nodez1, 0)
+
+                    nodeGraph.SetVar(self.Destination, mergevec, 0)
+                else:
+                    print("unknown noise target")
+
+            if self.Source1.defaults[0] == '"cell"':
+                # split the source vector
+                node = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
+                nodeGraph.AddLink(node, 0, self.Source2)
+
+                # floor the individial components
+                nodex = nodeGraph.CreateNode('ShaderNodeMath')
+                nodex.SetProperty("operation", "SUBTRACT")
+                nodeGraph.AddNodeLink(nodex, 0, node, 0)
+                nodex.SetProperty("inputs[1].default_value", "0.5")
+
+                nodex1 = nodeGraph.CreateNode('ShaderNodeMath')
+                nodex1.SetProperty("operation", "ROUND")
+                nodeGraph.AddNodeLink(nodex1, 0, nodex, 0)
+
+                nodey = nodeGraph.CreateNode('ShaderNodeMath')
+                nodey.SetProperty("operation", "SUBTRACT")
+                nodeGraph.AddNodeLink(nodey, 0, node, 1)
+                nodey.SetProperty("inputs[1].default_value", "0.5")
+
+                nodey1 = nodeGraph.CreateNode('ShaderNodeMath')
+                nodey1.SetProperty("operation", "ROUND")
+                nodeGraph.AddNodeLink(nodey1, 0, nodey, 0)
+                
+                nodez = nodeGraph.CreateNode('ShaderNodeMath')
+                nodez.SetProperty("operation", "SUBTRACT")
+                nodeGraph.AddNodeLink(nodez, 0, node, 2)
+                nodez.SetProperty("inputs[1].default_value", "0.5")
+
+                nodez1 = nodeGraph.CreateNode('ShaderNodeMath')
+                nodez1.SetProperty("operation", "ROUND")
+                nodeGraph.AddNodeLink(nodez1, 0, nodez, 0)
+
+                # merge back into a vector
+                floorvec = nodeGraph.CreateNode('ShaderNodeCombineXYZ')
+                nodeGraph.AddNodeLink(floorvec, 0, nodex1, 0)
+                nodeGraph.AddNodeLink(floorvec, 1, nodey1, 0)
+                nodeGraph.AddNodeLink(floorvec, 2, nodez1, 0)
+
+                # get some cell noise
+                vor = nodeGraph.CreateNode('ShaderNodeTexVoronoi')
+                vor.SetProperty("coloring", "'CELLS'")
+                nodeGraph.AddNodeLink(vor, 0, floorvec, 0)
+                # if the destination is a vector, just assign it
+                if (self.Destination.IsPointLike()):
+                    nodeGraph.SetVar(self.Destination, vor, 0)
+                else: # if it is a number, split the color and pick the first channel, the fact output of the texture averages the rgb channels and ruins the nice flat 0..1 distribution
+                    nodeSplit = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
+                    nodeGraph.AddNodeLink(nodeSplit, 0, vor, 0)
+                    nodeGraph.SetVar(self.Destination, nodeSplit, 0)
             else:
                 print("unsupporte noise type %s" % self.Source1.defaults[0])
-        else:
-            print("unsupporte noise target  %s" % self.Destination.dataType)
 
 class Opcode_compassign(Opcode_DIS):
     def __init__(self, OSO, index):
