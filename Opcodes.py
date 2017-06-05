@@ -1,7 +1,7 @@
 from .OpcodeBaseTypes import Opcode, Opcode_DS, Opcode_DSS, Opcode_SDD
 from .OpcodeBaseTypes import Opcode_DSSS, Opcode_DSI, Opcode_DIS, Opcode_D
 from .OpcodeBaseTypes import Opcode_basicMath1, Opcode_basicMath
-
+from .OSOVariable import OSOVariable
 
 def float_range(start, stop, step):
     while start < stop:
@@ -681,9 +681,26 @@ class Opcode_step(Opcode_DSS):
         nodeGraph.SetVar(self.Destination, node, 0)
 
 
-class Opcode_noise(Opcode_DSS):
+class Opcode_noise(Opcode):
     def __init__(self, OSO, index):
-        Opcode_DSS.__init__(self, OSO, index)
+        Opcode.__init__(self, OSO, index)
+        self.Destination = OSO.GetVariable(self.Instuction.Parameters[0])
+        if (len(self.Instuction.Parameters) == 3):
+            self.Source1 = OSO.GetVariable(self.Instuction.Parameters[1])
+            self.Source2 = OSO.GetVariable(self.Instuction.Parameters[2])
+        elif (len(self.Instuction.Parameters) == 2):
+            self.Source1 = OSOVariable('const	string	uperlin	"uperlin"')
+            self.Source2 = OSO.GetVariable(self.Instuction.Parameters[1])
+
+    def Destination(self):
+        return self.Destination
+
+    def Source1(self):
+        return self.Source1
+
+    def Source2(self):
+        return self.Source2
+
 
     def Generate(self, nodeGraph):
 
