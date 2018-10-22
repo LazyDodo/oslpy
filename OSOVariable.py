@@ -1,6 +1,7 @@
+import shlex 
 class OSOVariable():
     def __init__(self, line):
-        tokens = line.split()
+        tokens = shlex.split(line)
         idx = 2
         if len(tokens) > 2:
             self.InitVar =  ""

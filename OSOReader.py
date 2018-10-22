@@ -1,3 +1,4 @@
+import shlex
 from .OSOVariable import OSOVariable
 from .OSOInstruction import OSOInstruction
 from enum import Enum
@@ -23,7 +24,7 @@ class OSOReader():
         self.Instructions.append(inst)
 
     def HandleVersion(self, line):
-        tokens = line.split()
+        tokens = shlex.split(line)
         if tokens[0] == 'OpenShadingLanguage':
             self.Version = tokens[1]
             self.ParserState = ParserState.WaitVariablesAndCode
@@ -31,7 +32,9 @@ class OSOReader():
         return False
 
     def HandleCode(self, line):
-        tokens = line.split()
+        tokens = shlex.split(line)
+        tokens = [word for word in tokens if not word.startswith('%meta')]
+
         if tokens[0] == 'code':
             self.CurrentTag = tokens[1]
         else:
@@ -40,7 +43,9 @@ class OSOReader():
         return True
 
     def HandleVariablesAndCode(self, line):
-        tokens = line.split()
+        tokens = shlex.split(line)
+        tokens = [word for word in tokens if not word.startswith('%meta')]
+
         if tokens[0] == 'code':
             self.ParserState = ParserState.WaitCode
             return self.HandleCode(line)

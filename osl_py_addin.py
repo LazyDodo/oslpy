@@ -123,6 +123,7 @@ class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
                         OutputIdx = OutputIdx + 1
                 # print("Compiled %s", graph.ShaderName)
                 # print("Generating nodegroup...")
+                graph.prune()
                 self.node_tree = CreateNodeGroup(graph, oso.Variables)
                 for var in oso.Variables:
                     if var.varType == 'param' and 'oslpy_has_' in var.Name:

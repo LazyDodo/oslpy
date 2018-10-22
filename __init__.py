@@ -2,6 +2,9 @@ from .osl_py_addin import ShaderNodeOSLPY
 import bpy
 import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
+import sys
+import importlib
+
 
 bl_info = {
     "name": "OSLPY",
@@ -16,7 +19,16 @@ bl_info = {
     "wiki_url": "",
     "category": "Node"}
 
-
+modulesNames = ['NodeGroupBuilder', 'Nodes','OpcodeBaseTypes','Opcodes','osl_py_addin','OSOInstruction','OSOReader','OSOVariable','StringBuilder']
+ 
+modulesFullNames = {}
+for currentModuleName in modulesNames:
+        modulesFullNames[currentModuleName] = ('{}'.format(currentModuleName))
+ 
+for currentModuleFullName in modulesFullNames.values():
+    if currentModuleFullName in sys.modules:
+        importlib.reload(sys.modules[currentModuleFullName])
+    
 class ExtraNodesCategory(NodeCategory):
     @classmethod
     def poll(cls, context):

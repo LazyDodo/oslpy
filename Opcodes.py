@@ -691,6 +691,9 @@ class Opcode_noise(Opcode):
         elif (len(self.Instuction.Parameters) == 2):
             self.Source1 = OSOVariable('const	string	uperlin	"uperlin"')
             self.Source2 = OSO.GetVariable(self.Instuction.Parameters[1])
+        if (len(self.Instuction.Parameters) == 4): #TODO: period is ignored. 
+            self.Source1 = OSO.GetVariable(self.Instuction.Parameters[1])
+            self.Source2 = OSO.GetVariable(self.Instuction.Parameters[2])
 
     def Destination(self):
         return self.Destination
@@ -715,7 +718,7 @@ class Opcode_noise(Opcode):
                 elif (self.Destination.IsPointLike()):
                     nodeGraph.SetVar(self.Destination, node, 0)
 
-            if self.Source1.defaults[0] in ['"perlin"','"snoise"'] :
+            if self.Source1.defaults[0] in ['"perlin"','"snoise"',"perlin","snoise"] :
                 node = nodeGraph.CreateNode("ShaderNodeTexNoise")
                 node.SetProperty("inputs[1].default_value", "1.0")
                 node.SetProperty("inputs[2].default_value", "0.0")
@@ -780,7 +783,7 @@ class Opcode_noise(Opcode):
                 else:
                     print("unknown noise target")
 
-            if self.Source1.defaults[0] == '"cell"':
+            if self.Source1.defaults[0] in ['"cell"','cell'] :
                 # split the source vector
                 node = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
                 nodeGraph.AddLink(node, 0, self.Source2)

@@ -1,6 +1,9 @@
+import shlex
+
 class OSOInstruction():
     def __init__(self, line, tag):
-        tokens = line.split()
+        tokens = shlex.split(line)
+        tokens = [word for word in tokens if not word.startswith('%meta')]
         self.Opcode = tokens[0]
         self.Tag = tag
         self.Hints = []

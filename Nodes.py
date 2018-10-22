@@ -68,6 +68,33 @@ class NodeGraph():
         link = NodeLink(targetNode, targetIndex, sourceNode, SourceIndex)
         self.LinkList.append(link)
 
+    def prune(self):
+        return
+        print("---------prune---------")
+        while True:
+            SourceNodes = []
+            for el in self.LinkList:
+                if el.SourceNode not in SourceNodes:
+                    SourceNodes.append(el.SourceNode)
+
+            DeadNodes = []
+            for el in self.NodeList:
+                if el not in SourceNodes:
+                    if (el.Name != "OutputNode"):
+                        DeadNodes.append(el)
+            print("Dead Nodes : %s" % len(DeadNodes))
+            for nod in DeadNodes:
+                print("Dead node : %s " % nod.Name)
+                TargetLinks = []
+                for el in self.LinkList:
+                    if el.TargetNode == nod:
+                        TargetLinks.append(el)
+                for el in TargetLinks:
+                    self.LinkList.remove(el)
+                self.NodeList.remove(nod)
+            if (len(DeadNodes)==0):
+                break
+
     def Nodes(self):
         return self.Nodes
 
@@ -110,15 +137,28 @@ class NodeGraph():
             print("Unsupported const type %s(%s)" % (var.Name, var.dataType))
 
     def MakeGlobal(self,var):
-        node = self.CreateNode('ShaderNodeNewGeometry')
         if var.Name=="N":
+            node = self.CreateNode('ShaderNodeNewGeometry')
             self.SetVar(var, node, 1)
         elif var.Name=="I":
+            node = self.CreateNode('ShaderNodeNewGeometry')
             self.SetVar(var, node, 4)
         elif var.Name=="P":
+            node = self.CreateNode('ShaderNodeNewGeometry')
             self.SetVar(var, node, 0)
         elif var.Name=="Ng":
+            node = self.CreateNode('ShaderNodeNewGeometry')
             self.SetVar(var, node, 3)
+        elif var.Name=="u":
+            node = self.CreateNode('ShaderNodeTexCoord')
+            Split = self.CreateNode('ShaderNodeSeparateXYZ')
+            self.AddNodeLink(Split, 0, node, 0)
+            self.SetVar(var, Split, 0)
+        elif var.Name=="v":
+            node = self.CreateNode('ShaderNodeTexCoord')
+            Split = self.CreateNode('ShaderNodeSeparateXYZ')
+            self.AddNodeLink(Split, 0, node, 0)
+            self.SetVar(var, Split, 1)
         else:
             print("Unhandled global %s" % var.Name)
             

@@ -156,7 +156,7 @@ class Opcode_basicMath(Opcode_DSS):
             nodeGraph.AddLink(node, 0, self.Source1)
             nodeGraph.AddLink(node, 1, self.Source2)
             nodeGraph.SetVar(self.Destination, node, 0)
-        elif self.Operation in ["MULTIPLY" ,"DIVIDE"]:
+        elif self.Operation in ["MULTIPLY" ,"DIVIDE","MODULO"]:
             node1 = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
             nodeGraph.AddLink(node1, 0, self.Source1)
             node2 = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
