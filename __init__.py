@@ -11,8 +11,8 @@ bl_info = {
     "author": (
         "LazyDodo, "
      ),
-    "version": (0, 0, 1, 1),
-    "blender": (2, 7, 8),
+    "version": (0, 0, 2, 0),
+    "blender": (2, 80, 0),
     "location": "Nodes > Add nodes",
     "description": "OSL PY",
     "warning": "",
@@ -32,8 +32,7 @@ for currentModuleFullName in modulesFullNames.values():
 class ExtraNodesCategory(NodeCategory):
     @classmethod
     def poll(cls, context):
-        return (context.space_data.tree_type == 'ShaderNodeTree' and
-                context.scene.render.use_shading_nodes)
+        return (context.space_data.tree_type == 'ShaderNodeTree')
 
 
 node_categories = [

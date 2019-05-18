@@ -25,7 +25,7 @@ class OSOAstBuilder():
         return True
 
 
-class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
+class ShaderNodeOSLPY(bpy.types.ShaderNodeCustomGroup):
     def my_osl_compile(self, input_path):
         """compile .osl file with given filepath to temporary .oso file"""
         output_file = tempfile.NamedTemporaryFile(mode='w', suffix=".oso", delete=False)
@@ -51,10 +51,10 @@ class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
 
     def UpdateScript(self):
         if self.ScriptType == "INTERNAL":
-            if (bpy.data.texts.find(self.script) != -1 ):
+            if (bpy.data.texts.find(self.script.strip()) != -1 ):
                 # write text datablock contents to temporary file
                 osl_file = tempfile.NamedTemporaryFile(mode='w', suffix=".osl", delete=False)
-                osl_file.write(bpy.data.texts[self.script].as_string())
+                osl_file.write(bpy.data.texts[self.script.strip()].as_string())
                 osl_file.close()
                 ok, oso_path = self.my_osl_compile(osl_file.name)
                 os.remove(osl_file.name)
@@ -147,14 +147,14 @@ class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
             import traceback
             traceback.print_exc()
 
-    script = bpy.props.StringProperty(
+    script : bpy.props.StringProperty(
             update=mypropUpdate
             )
-    extScript = bpy.props.StringProperty(
+    extScript : bpy.props.StringProperty(
             subtype="FILE_PATH",
             update=reloads
             )
-    ScriptType = bpy.props.EnumProperty(
+    ScriptType : bpy.props.EnumProperty(
             name="Script Type",
             description="Script Type",
             items=[
@@ -164,16 +164,16 @@ class ShaderNodeOSLPY(bpy.types.NodeCustomGroup):
             , update=reloads
             )
 
-    reloading = bpy.props.BoolProperty(default=False, update=reloads)
+    reloading : bpy.props.BoolProperty(default=False, update=reloads)
 
     def init(self, context):
         self.getNodetree(self.name + '_node_tree2')
 
     def draw_buttons(self, context, layout):
-        layout.label("Node settings")
+        layout.label(text="Node settings")
         layout.prop(self, "ScriptType", expand=True)
 
-        split = layout.split(percentage=0.85, align=True)
+        split = layout.split(factor=0.85, align=True)
         box = split.box()
         if self.ScriptType == "INTERNAL":
             box.prop_search(self, "script", bpy.data, "texts")

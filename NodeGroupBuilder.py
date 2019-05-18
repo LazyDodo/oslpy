@@ -43,6 +43,6 @@ def CreateNodeGroup(graph, vars):
         TargetNode = osl_group.nodes[link.TargetNode.Name]
         SourceNode = osl_group.nodes[link.SourceNode.Name]
         osl_group.links.new(TargetNode.inputs[link.TargetIndex],
-                            SourceNode.outputs[link.SourceIndex], False)
+                            SourceNode.outputs[link.SourceIndex], verify_limits=False)
     # osl_group.links.end_update()
     return osl_group
