@@ -34,11 +34,12 @@ class Opcode_DS(Opcode):
     def Source(self):
         return self.Source
 
+
 class Opcode_D(Opcode):
     def __init__(self, OSO, index):
         Opcode.__init__(self, OSO, index)
         self.Destination = OSO.GetVariable(self.Instuction.Parameters[0])
-        
+
     def Destination(self):
         return self.Destination
 
@@ -150,13 +151,13 @@ class Opcode_basicMath(Opcode_DSS):
         nodeGraph.SetVar(self.Destination, node, 0)
 
     def GeneratePointPoint(self, nodeGraph):
-        node = nodeGraph.CreateNode("ShaderNodeVectorMath")
         if self.Operation in ['ADD', 'SUBTRACT']:
+            node = nodeGraph.CreateNode("ShaderNodeVectorMath")
             node.SetProperty("operation", self.Operation)
             nodeGraph.AddLink(node, 0, self.Source1)
             nodeGraph.AddLink(node, 1, self.Source2)
             nodeGraph.SetVar(self.Destination, node, 0)
-        elif self.Operation in ["MULTIPLY" ,"DIVIDE","MODULO"]:
+        elif self.Operation in ["MULTIPLY", "DIVIDE", "MODULO", "ARCTAN2"]:
             node1 = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
             nodeGraph.AddLink(node1, 0, self.Source1)
             node2 = nodeGraph.CreateNode('ShaderNodeSeparateXYZ')
@@ -237,7 +238,6 @@ class Opcode_basicMath(Opcode_DSS):
         nodeGraph.AddNodeLink(nodeOut, 2, nodez, 0)
         nodeGraph.SetVar(self.Destination, nodeOut, 0)
 
-
     def Generate(self, nodeGraph):
         if self.Source1.IsNumeric() and self.Source2.IsNumeric():
             self.GenerateFloatFloat(nodeGraph)
@@ -284,7 +284,6 @@ class Opcode_basicMath1(Opcode_DS):
         nodeGraph.AddNodeLink(nodeOut, 1, nodey, 0)
         nodeGraph.AddNodeLink(nodeOut, 2, nodez, 0)
         nodeGraph.SetVar(self.Destination, nodeOut, 0)
-
 
     def Generate(self, nodeGraph):
         if self.Source.IsNumeric():
